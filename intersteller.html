@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система замовлення суші для користувача</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        form input[type="text"],
+        form input[type="email"],
+        form input[type="tel"],
+        form button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        form button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        form button:hover {
+            background-color: #0056b3;
+        }
+        .order-summary {
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ласкаво просимо до системи замовлення суші!</h1>
+        
+        <h2>Будь ласка, введіть особисту інформацію:</h2>
+        <form id="personalInfoForm">
+            <label for="name">Прізвище та ім'я:</label>
+            <input type="text" id="name" required>
+
+            <label for="email">Електронна пошта:</label>
+            <input type="email" id="email" required>
+
+            <label for="address">Адреса доставки:</label>
+            <input type="text" id="address" required>
+
+            <label for="phone">Номер телефону (+380xxxxxxxxx):</label>
+            <input type="tel" id="phone" pattern="^\+380\d{9}$" required>
+
+            <button type="button" onclick="submitPersonalInfo()">Далі</button>
+        </form>
+
+        <h2>Оберіть блюда:</h2>
+        <form id="dishesForm">
+            <button type="button" onclick="submitDishes()">Замовити</button>
+        </form>
+
+        <div id="orderSummary" class="order-summary"></div>
+    </div>
+
+    <script>
+            const menu = [
+            {
+                ID: '1',
+                title:'california',
+                price: 7000,
+                category: 'sushi',
+                ingredients: ['rice', 'souce', 'sea fish']
+            },
+            {
+                ID: '2',
+                title:'Philadelphia',
+                price: 6000,
+                category: 'sushi',
+                ingredients: ['rise', 'nori', 'avokado', 'salmon']
+            },
+            {
+                ID: '3',
+                title:'Нігірі',
+                price: 6500,
+                category: 'sushi',
+                ingredients: ['rise', 'souce', 'algae', 'tuna']
+            },
+            {
+                ID: '4',
+                title:'Хосомакі',
+                price: 5500,
+                category: 'rolls',
+                ingredients: ['rise', 'freshwater fish', 'vegetables', 'algae', 'boiled chicken']
+            },
+            {
+                ID: '5',
+                title:'Футомакі',
+                price: 8500,
+                category: 'rolls',
+                ingredients: ['rise', 'cucumbers', 'avocado', 'radish', 'avocado', 'tomatoes']
+            },
+            {
+                ID: '6',
+                title:'Спрінг-роли',
+                price: 9000,
+                category: 'rolls',
+                ingredients: ['rise', 'egg omelette', 'souce', 'boiled chicken', 'sea fish']
+            }
+        ];
+
+        let order = {
+            name: '',
+            email: '',
+            phone: '',
+            delivery: {
+                delivery_price: 500,
+                from: "вул.Чорновола 15",
+                to: '',
+            },
+            dishes: [],
+            finalPrice: '',
+            status: 'В обробці',
+        };
+
+        function submitPersonalInfo() {
+            order.name = document.getElementById('name').value;
+            order.email = document.getElementById('email').value;
+            order.delivery.to = document.getElementById('address').value;
+            order.phone = document.getElementById('phone').value;
+
+            generateDishesMenu();
+        }
+
+        function generateDishesMenu() {
+            const dishesForm = document.getElementById('dishesForm');
+            dishesForm.innerHTML = '';
+
+            for (const dish of menu) {
+                const dishLabel = document.createElement('label');
+                dishLabel.textContent = `${dish.title} - ${dish.price} грн`;
+                const dishCheckbox = document.createElement('input');
+                dishCheckbox.type = 'checkbox';
+                dishCheckbox.name = 'dish';
+                dishCheckbox.value = dish.ID;
+                dishLabel.appendChild(dishCheckbox);
+                dishesForm.appendChild(dishLabel);
+                dishesForm.appendChild(document.createElement('br'));
+            }
+
+            const orderButton = document.createElement('button');
+            orderButton.type = 'button';
+            orderButton.textContent = 'Замовити';
+            orderButton.onclick = submitDishes;
+            dishesForm.appendChild(orderButton);
+        }
+
+        function submitDishes() {
+            const checkboxes = document.querySelectorAll('input[name=dish]:checked');
+            order.dishes = [];
+            checkboxes.forEach(checkbox => {
+                const dishID = checkbox.value;
+                const dish = menu.find(item => item.ID === dishID);
+                if (dish) {
+                    order.dishes.push(dish);
+                }
+            });
+
+            const orderSummary = document.getElementById('orderSummary');
+            orderSummary.innerHTML = `
+                <h2>Ваше замовлення:</h2>
+                <p>Прізвище та ім'я: ${order.name}</p>
+                <p>Електронна пошта: ${order.email}</p>
+                <p>Номер телефону: ${order.phone}</p>
+                <p>Адреса доставки: ${order.delivery.to}</p>
+                <p>Ваші блюда:</p>
+                <ul>
+                    ${order.dishes.map(dish => `<li>${dish.title}</li>`).join('')}
+                </ul>
+                <p>Ціна замовлення: ${calculateTotalPrice()} грн</p>
+                <p>Статус замовлення: ${order.status}</p>
+            `;
+        }
+
+        function calculateTotalPrice() {
+            let totalPrice = order.delivery.delivery_price;
+            for (const dish of order.dishes) {
+                totalPrice += dish.price;
+            }
+            return totalPrice;
+        }
+    </script>
+</body>
+</html>
